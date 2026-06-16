@@ -1,0 +1,15 @@
+// ==============================================================================
+// Phase 2: Investigation Query - Find Successful Connections on Compromised Device
+// Description: Filters out failures on a specific device to find successful connections.
+// ==============================================================================
+
+let TargetComputer = "AZWINSV-ONPREM";
+
+DeviceEvents
+| where TimeGenerated > ago(4h)
+| where Computer == TargetComputer
+| where ActionType == "DnsQueryResponse"
+| extend ResponseCode = tostring(AdditionalFields.ResponseCode)
+// Filter out the errors to see only the successful connection
+| where ResponseCode == "SUCCESS" or ResponseCode == "0"
+| project TimeGenerated, Computer, DnsQuery = tostring(AdditionalFields.DnsQueryString), ResponseCode

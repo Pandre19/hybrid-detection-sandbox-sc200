@@ -1,0 +1,16 @@
+// ==============================================================================
+// Phase 1: Detection Query - Identify Devices with High Volume of Failed DNS Queries
+// Description: Scans endpoints to find devices generating abnormal NXDOMAIN spikes.
+// ==============================================================================
+
+DeviceEvents
+| where TimeGenerated > ago(1h)
+| where ActionType == "DnsQueryResponse" 
+| extend ResponseCode = tostring(AdditionalFields.ResponseCode)
+// Filter for failed queries (Domain does not exist)
+| where ResponseCode == "NXDOMAIN"
+// Count total failures per computer
+| summarize FailedQueriesCount = count() by Computer, DeviceId
+// Alert if an endpoint exceeds 50 failures in one hour
+| where FailedQueriesCount > 50
+| order by FailedQueriesCount desc
